@@ -1,4 +1,4 @@
 
 pub fn main() {
-    bridgebuilder::build(&["src/main.rs"]).unwrap();
+    bridgebuilder::build(&["src/lib.rs"]).unwrap();
 }

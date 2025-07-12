@@ -1,18 +1,5 @@
-use std::default::Default;
 use bridgebuilder_attrs::export_enum;
-
-#[derive(Default)]
-// #[seedoubleplus_export]
-#[repr(C)]
-pub struct Vector3 {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
-}
-
-pub enum IgnoreMe {
-    One, Two
-}
+use std::alloc::{Layout, alloc, dealloc};
 
 #[derive(Default)]
 #[export_enum]
@@ -22,6 +9,34 @@ pub enum Foo {
     Boolean(bool),
     Integer(i32)
     // Vec3(Vector3),
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn make_Foo(variant: i32, value: i32) -> *mut Foo {
+    let res = if variant == 0 {
+        Foo::Nil
+    } else if variant == 1 {
+        Foo::Boolean(value != 0)
+    } else {
+        Foo::Integer(value)
+    };
+
+    unsafe {
+        let layout = Layout::new::<Foo>();
+        let ptr = alloc(layout) as *mut Foo;
+        *ptr = res;
+        return ptr;
+    }
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn drop_Foo(this: *mut Foo) {
+    // core::mem::drop(*this); // ???
+
+    let layout = Layout::new::<Foo>();
+    unsafe {
+        dealloc(this as *mut u8, layout);
+    }
 }
 
 /*
@@ -72,8 +87,3 @@ extern "C" seedoubleplus_FooToTrue(const Foo*);
 extern "C" seedoubleplus_FooToFalse(const Foo*);
 
 */
-
-fn main() {
-
-    println!("Hello, world!");
-}
